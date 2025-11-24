@@ -3,12 +3,16 @@ package crawler
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
+	"github/AHKLIC/Spider/work/config"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,7 +26,6 @@ func (b *BaseCrawler) NewRequest(method, url string) (*http.Request, error) {
 		return nil, err
 	}
 
-	// 1.只有初次才注入LocalCookie（从配置文件读取，已拼接好的完整Cookie）
 	if b.Cfg.Cookie != "" {
 		req.Header.Set("Cookie", b.Cfg.Cookie)
 	}
@@ -159,6 +162,7 @@ func (b *BaseCrawler) GetDoc() (*goquery.Document, error) {
 	return doc, nil
 }
 
+// api json接口通用逻辑
 func (b *BaseCrawler) GetJsonBybts() ([]byte, error) {
 	req, err := b.NewRequest("GET", b.Cfg.URL)
 	if err != nil {
@@ -209,59 +213,57 @@ func (b *BaseCrawler) GetJsonBybts() ([]byte, error) {
 
 }
 
-//。。。。直接处理返回的json
+func (b *BaseCrawler) updateUrlInConfigFile(name, url string) error {
+	filePath, err := filepath.Abs(config.ConfigPath)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("config file does not exist: %s", filePath)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to turn filePath in updateUrlInConfigFile: %v", err)
+	}
 
-// func (b *BaseCrawler) updateCookieInConfigFile(name, cookie string) error {
-// 	filePath, err := filepath.Abs(config.ConfigPath)
-// 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-// 		return fmt.Errorf("config file does not exist: %s", filePath)
-// 	}
-// 	if err != nil {
-// 		return fmt.Errorf("failed to turn filePath in updateCookieInConfigFile: %v", err)
-// 	}
+	// 更新对应爬虫的url
+	found := config.UpdateGlobaURL(name, url)
+	if !found {
+		return fmt.Errorf("crawler with name '%s' not found in config file", name)
+	}
+	newconfig := config.GetGlobalConfig()
 
-// 	// 更新对应爬虫的Cookie
-// 	found := config.UpdateGlobaCookie(name, cookie)
-// 	if !found {
-// 		return fmt.Errorf("crawler with name '%s' not found in config file", name)
-// 	}
-// 	newconfig := config.GetGlobalConfig()
+	config.ConfigMu.Lock()
+	defer config.ConfigMu.Unlock()
 
-// 	config.ConfigMu.Lock()
-// 	defer config.ConfigMu.Unlock()
+	// 创建临时文件
+	tmpFilePath := filePath + ".tmp"
+	tmpFile, err := os.Create(tmpFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create temp config file: %v", err)
+	}
 
-// 	// 创建临时文件
-// 	tmpFilePath := filePath + ".tmp"
-// 	tmpFile, err := os.Create(tmpFilePath)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create temp config file: %v", err)
-// 	}
+	// 编码到临时文件
+	encoder := json.NewEncoder(tmpFile)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(newconfig); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFilePath) // 删除临时文件
+		return fmt.Errorf("failed to encode config: %v", err)
+	}
 
-// 	// 编码到临时文件
-// 	encoder := json.NewEncoder(tmpFile)
-// 	encoder.SetIndent("", "  ")
-// 	if err := encoder.Encode(newconfig); err != nil {
-// 		tmpFile.Close()
-// 		os.Remove(tmpFilePath) // 删除临时文件
-// 		return fmt.Errorf("failed to encode config: %v", err)
-// 	}
+	// 确保数据写入磁盘
+	if err := tmpFile.Sync(); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFilePath)
+		return fmt.Errorf("failed to sync temp file: %v", err)
+	}
+	tmpFile.Close()
 
-// 	// 确保数据写入磁盘
-// 	if err := tmpFile.Sync(); err != nil {
-// 		tmpFile.Close()
-// 		os.Remove(tmpFilePath)
-// 		return fmt.Errorf("failed to sync temp file: %v", err)
-// 	}
-// 	tmpFile.Close()
+	// 重命名临时文件为正式文件（原子操作）
+	if err := os.Rename(tmpFilePath, filePath); err != nil {
+		os.Remove(tmpFilePath)
+		return fmt.Errorf("failed to rename temp file: %v", err)
+	}
 
-// 	// 重命名临时文件为正式文件（原子操作）
-// 	if err := os.Rename(tmpFilePath, filePath); err != nil {
-// 		os.Remove(tmpFilePath)
-// 		return fmt.Errorf("failed to rename temp file: %v", err)
-// 	}
-
-// 	return nil
-// }
+	return nil
+}
 
 // 辅助函数：取最小值
 func min(a, b int) int {

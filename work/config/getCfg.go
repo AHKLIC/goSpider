@@ -92,3 +92,16 @@ func UpdateGlobaCookie(name string, cookie string) bool {
 	return false
 
 }
+func UpdateGlobaURL(name string, url string) bool {
+	muGlobalConfig.Lock()
+	defer muGlobalConfig.Unlock()
+	for i := range globalConfig.Crawlers {
+		if globalConfig.Crawlers[i].Name == name {
+			globalConfig.Crawlers[i].URL = url
+			return true
+		}
+
+	}
+	return false
+
+}

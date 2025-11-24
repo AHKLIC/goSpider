@@ -39,6 +39,8 @@ func (f *FileStorage) Save(items []interface{}) error {
 		return f.saveHotItems(items)
 	case *crawler.WeiboHotItem:
 		return f.saveWeiboHotItems(items)
+	case *crawler.BilibiliHotItem:
+		return f.saveBiliHotItems(items)
 	default:
 		return fmt.Errorf("unsupported item type: %T", items[0])
 	}
@@ -71,9 +73,34 @@ func (f *FileStorage) saveHotItems(items []interface{}) error {
 	return nil
 }
 
-// saveWeiboHotItems 存储扩展 WeiboHotItem 类型：按 source 分目录
-func (f *FileStorage) saveWeiboHotItems(items []interface{}) error {
+// saveBiliHotItems 存储扩展 BilibiliHotItem 类型：按 source 分目录
+func (f *FileStorage) saveBiliHotItems(items []interface{}) error {
 	// 1. 转换类型并分组（WeiboHotItem 继承 HotItem，直接取 Source）
+	sourceItemsMap := make(map[string][]*crawler.BilibiliHotItem)
+	for _, item := range items {
+		biliItem, ok := item.(*crawler.BilibiliHotItem)
+		if !ok {
+			fmt.Printf("warning: skip invalid BilibiliHotItem type: %T\n", item)
+			continue
+		}
+		// 按 source 分组（复用 HotItem 的 Source 字段）
+		source := biliItem.Source
+		if source == "" {
+			source = "unknown"
+		}
+		sourceItemsMap[source] = append(sourceItemsMap[source], biliItem)
+	}
+
+	// 2. 遍历分组，逐个存储
+	for source, biliItems := range sourceItemsMap {
+		if err := f.saveToFile(source, biliItems); err != nil {
+			return fmt.Errorf("save BilibiliHotItem (source=%s) failed: %w", source, err)
+		}
+	}
+	return nil
+}
+
+func (f *FileStorage) saveWeiboHotItems(items []interface{}) error {
 	sourceItemsMap := make(map[string][]*crawler.WeiboHotItem)
 	for _, item := range items {
 		weiboItem, ok := item.(*crawler.WeiboHotItem)
@@ -113,7 +140,7 @@ func (f *FileStorage) saveToFile(source string, data interface{}) error {
 		return fmt.Errorf("create source dir %s failed: %w", sourceDir, err)
 	}
 
-	// 3. 创建/覆盖文件（如果需要追加而非覆盖，将 os.Create 改为 os.OpenFile 并设置 O_APPEND 标志）
+	// 3. 创建/覆盖文件
 	file, err := os.Create(savePath)
 	if err != nil {
 		return fmt.Errorf("create file %s failed: %w", savePath, err)

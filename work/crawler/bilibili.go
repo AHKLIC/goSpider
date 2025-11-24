@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github/AHKLIC/Spider/work/config"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -18,18 +20,124 @@ type BilibiliCrawler struct {
 	BaseCrawler
 }
 
-func GetSignUrl() string {
+type BilibiliHotItem struct {
+	HotItem
+}
+
+// 顶层 JSON 结构体（仅保留 data 字段，其他字段按需添加）
+type BiliHotResponse struct {
+	Code    int         `json:"code"`    // 响应状态码（0 成功）
+	Message string      `json:"message"` // 响应信息
+	Data    BiliHotData `json:"data"`    // 核心数据
+}
+
+// Data 结构体（仅保留 list 字段）
+type BiliHotData struct {
+	List []BiliHotItem `json:"list"` // 热搜视频列表
+}
+
+// 单个视频项结构体（仅保留需要的字段，嵌套 stat 子结构体）
+type BiliHotItem struct {
+	Title       string      `json:"title"`         // 视频标题
+	ShortLinkV2 string      `json:"short_link_v2"` // 视频短链接
+	Stat        BiliHotStat `json:"stat"`          // 统计数据（view/reply 在此处）
+}
+
+// 统计数据结构体（仅保留 view 和 reply 字段）
+type BiliHotStat struct {
+	View  int `json:"view"`  // 播放量
+	Reply int `json:"reply"` // 评论数
+}
+
+func (bili *BilibiliCrawler) Name() string {
+	return "bilibili"
+}
+
+func (bili *BilibiliCrawler) Init(cfg config.CrawlerConfig) error {
+	bili.BaseCrawler.Cfg = cfg
+	return nil
+}
+
+func (bili *BilibiliCrawler) Crawl() ([]interface{}, error) {
+
+	slog.Info("crawling", "source", bili.Name(), "url", bili.Cfg.URL)
+
+	const maxRetry uint32 = 2
+	for retry := uint32(0); retry < maxRetry; retry++ {
+		hotItems, err := bili.tryCrawl()
+		if err == nil && len(hotItems) > 0 {
+			// if retry > 0 {
+			// 	err := w.UpdateCookie(w.Name(), w.Cfg.URL)
+			// 	if err != nil {
+			// 		slog.Error("In UpdateCookie", "error", err)
+			// 	}
+			// }
+
+			// 爬取成功，返回结果
+			return hotItems, nil
+		}
+		// 爬取失败，判断是否需要刷新 url
+		//刷新url
+		bili.Cfg.URL = bili.GetSignUrl()
+		// 短暂延迟（避免频繁请求触发反爬）
+		time.Sleep(5 * time.Second)
+	}
+
+	// 重试 2 次后仍失败，返回最终错误
+	return nil, fmt.Errorf("%s crawl failed after %d retries url: %s  (cookie may be blocked by anti-spider)", bili.Name(), maxRetry, bili.Cfg.URL)
+
+}
+func (bili *BilibiliCrawler) tryCrawl() ([]interface{}, error) {
+	jsonBytes, err := bili.GetJsonBybts()
+	if err != nil {
+		slog.Error("Failed to get Bili JSON data", "error", err)
+		return nil, fmt.Errorf("get json data: %w", err)
+	}
+
+	//  解析 JSON 字节流到结构体
+	var response BiliHotResponse
+	err = json.Unmarshal(jsonBytes, &response)
+	if err != nil {
+		slog.Error("Failed to unmarshal Bili JSON", "error", err, "json_length", len(jsonBytes))
+		return nil, fmt.Errorf("unmarshal json: %w", err)
+	}
+
+	//提取目标字段，封装为自定义结构体（如 HotItem）
+	var result []interface{}
+	for _, item := range response.Data.List {
+		curhotvalue := item.Stat.View + item.Stat.Reply*10
+		// 封装为你的热点数据结构体（根据项目现有结构调整）
+		hotItem := &BilibiliHotItem{
+			HotItem: HotItem{
+				Title:     item.Title,
+				URL:       item.ShortLinkV2,
+				Source:    "bilibili",
+				HotValue:  fmt.Sprintf("%d", curhotvalue),
+				CrawledAt: time.Now(),
+			},
+		}
+		result = append(result, hotItem)
+	}
+
+	slog.Info("Bili crawl success", "item_count", len(result))
+	return result, nil
+}
+
+// 函数实现参考 https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video_ranking/ranking.md
+func (bili *BilibiliCrawler) GetSignUrl() string {
 	u, err := url.Parse("https://api.bilibili.com/x/web-interface/ranking/v2")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("orig: %s\n", u.String())
+	time.Sleep(2 * time.Second)
 	err = Sign(u)
 	if err != nil {
-		panic(err)
+		slog.Error(" bili GetSignUrl in Sign error ", "error", err)
 	}
-	fmt.Printf("signed: %s\n", u.String())
-
+	err = bili.updateUrlInConfigFile(bili.Name(), u.String())
+	if err != nil {
+		slog.Error("updateUrlInConfigFile", "error", err)
+	}
 	return u.String()
 	// 获取 wbi 时未修改 header
 	// 但实际使用签名后的 url 时发现风控较为严重

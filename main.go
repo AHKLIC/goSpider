@@ -28,6 +28,7 @@ func main() {
 
 	crawlers := []crawler.Crawler{
 		&crawler.WeiboCrawler{},
+		&crawler.BilibiliCrawler{},
 	}
 	globalConfig := config.GetGlobalConfig()
 	second := globalConfig.GlobalInterval
