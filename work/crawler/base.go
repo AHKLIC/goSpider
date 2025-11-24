@@ -159,7 +159,7 @@ func (b *BaseCrawler) GetDoc() (*goquery.Document, error) {
 	return doc, nil
 }
 
-func (b *BaseCrawler) GetJsonBybts([]byte, error) {
+func (b *BaseCrawler) GetJsonBybts() ([]byte, error) {
 	req, err := b.NewRequest("GET", b.Cfg.URL)
 	if err != nil {
 		slog.Error("Create request failed", "url", b.Cfg.URL, "error", err)
