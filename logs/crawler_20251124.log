@@ -1,0 +1,21 @@
+{"time":"2025-11-24T12:17:04.9968194+08:00","level":"INFO","msg":"Rotating logger initialized","log_dir":"./logs","prefix":"crawler"}
+{"time":"2025-11-24T12:17:04.9984472+08:00","level":"INFO","msg":"scheduler started","interval":3600000000000}
+{"time":"2025-11-24T12:17:04.9984472+08:00","level":"INFO","msg":"starting crawl task"}
+{"time":"2025-11-24T12:17:04.9984472+08:00","level":"INFO","msg":"crawling","source":"weibo","url":"https://s.weibo.com/top/summary?cate=realtimehot"}
+{"time":"2025-11-24T12:17:05.327081+08:00","level":"INFO","msg":"Current cookies","count":0,"cookies":null}
+{"time":"2025-11-24T12:17:05.3281265+08:00","level":"INFO","msg":"Raw body info","url":"https://s.weibo.com/top/summary?cate=realtimehot","length":18423}
+{"time":"2025-11-24T12:17:05.3291897+08:00","level":"INFO","msg":"Gzip decompress success","url":"https://s.weibo.com/top/summary?cate=realtimehot","uncompressed_length":100847}
+{"time":"2025-11-24T12:17:05.3307587+08:00","level":"WARN","msg":"Skip invalid item","index":4,"reason":"no rank number"}
+{"time":"2025-11-24T12:17:05.3312724+08:00","level":"INFO","msg":"Weibo crawl success","item_count":50}
+{"time":"2025-11-24T12:17:05.3312724+08:00","level":"INFO","msg":"crawl success","source":"weibo","count":50}
+{"time":"2025-11-24T12:17:05.3328942+08:00","level":"INFO","msg":"crawl task finished"}
+{"time":"2025-11-24T12:39:41.5358811+08:00","level":"INFO","msg":"Rotating logger initialized","log_dir":"./logs","prefix":"crawler"}
+{"time":"2025-11-24T12:39:41.5364187+08:00","level":"INFO","msg":"scheduler started","interval":3600000000000}
+{"time":"2025-11-24T12:39:41.5369487+08:00","level":"INFO","msg":"starting crawl task"}
+{"time":"2025-11-24T12:39:41.5369487+08:00","level":"INFO","msg":"crawling","source":"weibo","url":"https://s.weibo.com/top/summary?cate=realtimehot"}
+{"time":"2025-11-24T12:39:42.1319562+08:00","level":"INFO","msg":"Current cookies","count":0,"cookies":null}
+{"time":"2025-11-24T12:39:42.1326153+08:00","level":"INFO","msg":"Raw body info","url":"https://s.weibo.com/top/summary?cate=realtimehot","length":18080}
+{"time":"2025-11-24T12:39:42.1336664+08:00","level":"INFO","msg":"Gzip decompress success","url":"https://s.weibo.com/top/summary?cate=realtimehot","uncompressed_length":99968}
+{"time":"2025-11-24T12:39:42.1352762+08:00","level":"INFO","msg":"Weibo crawl success","item_count":50}
+{"time":"2025-11-24T12:39:42.1358056+08:00","level":"INFO","msg":"crawl success","source":"weibo","count":50}
+{"time":"2025-11-24T12:39:42.1373833+08:00","level":"INFO","msg":"crawl task finished"}
