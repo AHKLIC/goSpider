@@ -102,6 +102,7 @@ func (zhihu *ZhihuCrawler) tryCrawl() ([]interface{}, error) {
 
 }
 
+//doc处理
 // func (zhihu *ZhihuCrawler) tryCrawl() ([]interface{}, error) {
 
 // 	doc, err := zhihu.GetDoc() //html document execute
