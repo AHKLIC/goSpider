@@ -132,7 +132,7 @@ func (f *FileStorage) saveZhihuHotItems(items []interface{}) error {
 	for _, item := range items {
 		zhihuItem, ok := item.(*crawler.ZhihuHotItem)
 		if !ok {
-			fmt.Printf("warning: skip invalid WeiboHotItem type: %T\n", item)
+			fmt.Printf("warning: skip invalid ZhihuHotItem type: %T\n", item)
 			continue
 		}
 		// 按 source 分组（复用 HotItem 的 Source 字段）
@@ -146,7 +146,7 @@ func (f *FileStorage) saveZhihuHotItems(items []interface{}) error {
 	// 2. 遍历分组，逐个存储
 	for source, zhihuItems := range sourceItemsMap {
 		if err := f.saveToFile(source, zhihuItems); err != nil {
-			return fmt.Errorf("save WeiboHotItem (source=%s) failed: %w", source, err)
+			return fmt.Errorf("save ZhihuHotItem (source=%s) failed: %w", source, err)
 		}
 	}
 	return nil
