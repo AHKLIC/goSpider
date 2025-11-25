@@ -41,6 +41,8 @@ func (f *FileStorage) Save(items []interface{}) error {
 		return f.saveWeiboHotItems(items)
 	case *crawler.BilibiliHotItem:
 		return f.saveBiliHotItems(items)
+	case *crawler.ZhihuHotItem:
+		return f.saveZhihuHotItems(items)
 	default:
 		return fmt.Errorf("unsupported item type: %T", items[0])
 	}
@@ -119,6 +121,31 @@ func (f *FileStorage) saveWeiboHotItems(items []interface{}) error {
 	// 2. 遍历分组，逐个存储
 	for source, weiboItems := range sourceItemsMap {
 		if err := f.saveToFile(source, weiboItems); err != nil {
+			return fmt.Errorf("save WeiboHotItem (source=%s) failed: %w", source, err)
+		}
+	}
+	return nil
+}
+
+func (f *FileStorage) saveZhihuHotItems(items []interface{}) error {
+	sourceItemsMap := make(map[string][]*crawler.ZhihuHotItem)
+	for _, item := range items {
+		zhihuItem, ok := item.(*crawler.ZhihuHotItem)
+		if !ok {
+			fmt.Printf("warning: skip invalid WeiboHotItem type: %T\n", item)
+			continue
+		}
+		// 按 source 分组（复用 HotItem 的 Source 字段）
+		source := zhihuItem.Source
+		if source == "" {
+			source = "unknown"
+		}
+		sourceItemsMap[source] = append(sourceItemsMap[source], zhihuItem)
+	}
+
+	// 2. 遍历分组，逐个存储
+	for source, zhihuItems := range sourceItemsMap {
+		if err := f.saveToFile(source, zhihuItems); err != nil {
 			return fmt.Errorf("save WeiboHotItem (source=%s) failed: %w", source, err)
 		}
 	}

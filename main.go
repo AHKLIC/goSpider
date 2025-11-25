@@ -29,9 +29,10 @@ func main() {
 	crawlers := []crawler.Crawler{
 		&crawler.WeiboCrawler{},
 		&crawler.BilibiliCrawler{},
+		&crawler.ZhihuCrawler{},
 	}
 	globalConfig := config.GetGlobalConfig()
-	second := globalConfig.GlobalInterval
+	second := 300 //取配置中的最小间隔
 	scheduler, err := scheduler.NewScheduler(time.Duration(second)*time.Second, globalConfig.SaveDir, crawlers)
 	if err != nil {
 		panic(err)
