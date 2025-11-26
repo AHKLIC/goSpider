@@ -4,21 +4,23 @@
       "name": "weibo",
       "url": "https://s.weibo.com/top/summary?cate=realtimehot",
       "cookie": "SUB=_2AkMef5b-f8NxqwJRmvwUz2LlZIpyzQzEieKoI2clJRMxHRl-yT9kqnUdtRB6Nf-4ESwlYAZvlIOM0tBeezP3mwfr0SBm; SUBP=0033WrSXqPxfM72-Ws9jqgMF55529P9D9WhY9eoyW74YK4oyuvJipsSj",
-      "interval": 3600  
+      "interval": 300
     },
     {
       "name": "zhihu",
-      "url": "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true",
-      "cookie": "",  
-      "interval": 3600
+      "url": "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50\u0026desktop=true",
+      "cookie": "_zap=2d9d5d38-9b66-48b4-9216-f7fd68b9ac91; d_c0=X-fTKFJjJhqPTvQqKUUyfrIUsDDmD_zAdNM=|1742032772; _xsrf=SEotczT2ujEdbWWmsxgDnAtjbIvCjOHJ; __snaker__id=rFYmA95XXL3CBHjx; q_c1=ccb3e85f6afa41caab5ae100225c4174|1763362182000|1763362182000; __zse_ck=004_ybzv6/8tb8=mt2TOU18ve90/f0va0/c8jN0IhT8EdvTon2VaC6Y0AKMa095TkUV6U8Fg40OeSNMi1PJkv2xMlZG/rii9RdxnmYdE/KjkQrHN8Q1fAr664yJA0c/rRcm=-9VK//dCi/kkm8ZRt914pVgxCnGQZapVcOe06K5RBTzd0IW+F9hX9ulbjhNjsQ9jR7MQhWTyGxECWWfoxc0YYqYARtCqL5/ECGlj99rbZQ7rW9mkuyWCRjCzJY4YVWCFx; Hm_lvt_98beee57fd2ef70ccdd5ca52b9740c49=1763642050,1763686812,1763903309,1763956649; HMACCOUNT=1535412AF9C6220F; DATE=1745562495280; crystal=U2FsdGVkX19sq8zGYgXwLL8cCAEbzxk4a3SNMIR1e4v11zpkOFomcQ1eGTqkdJ+Yw4QsUHQvcmuolTGV9EI++1Yx87jGSfd2bsKr7oYpXZZdyGd7ewLvf8P6Nqj2DhmbCtrGCFWikv0gH3v3vUi6M9J4fOP8BW1HoE0UE18A1+Y1uCFgyUDxVQZ0prLqnjSm1ek31PdanXGaLUGoSsobcSS1Nt+Mo2fkDMozoRirHV7tntbyTH6dHVEq2CC1VtKa; assva6=U2FsdGVkX19R+Gj/mZOEmJTvWmF9b1le2fUBE42HKuo=; assva5=U2FsdGVkX19AlT8SaBgGbTX1Wg12osmmEALutOhVlIlZuNKUCgwCB9r3o5wk2MhiqoJcjP6+B6Wq67XD7Xxlhw==; cmci9xde=U2FsdGVkX1+eXQvDK/x0cQgFH/UomJAWi/R2ouwPTEn7exjKc3n0S6uiEMIV8PaQfoXmEjNnfFCXjs6d96fvyA==; pmck9xge=U2FsdGVkX1+6Ft9MRpZ5pakbQ467QKQuy2/OGsR4Qtg=; vmce9xdq=U2FsdGVkX1+zHM4OkyFVwpqkXyWmd9iT/1eDEx0J1p3GqsmhkfnnQQIhx81B0+FgtdNzK/VYyI0F+blLMtntjAC8t7C7O972BbeTPl57kX+5+RenjWdDmn8iIC5+9nHyzUtK7I1IWvHFgNHv2CiB4BCS6yErdY+J5iiXOBcDVkQ=; ff_supports_webp=1; gdxidpyhxdE=b1yZAnRUZuOu%5C4sdwvWwWDtAtUyS2%2FkqoSePtoUXi%5CN9fB%2FztSem9TsIS4lCrVtjECbneUjy1u2UCQSUB%2F1Sv9Wj536kqpYzie4sxdwOyh6zVZKn%5CiBYvG4zkycJbxmErPTSipAR%2B4RMOn7LI9%5CYszbqiqsZagR7%5CE3ZJZ5z%5Cw697uH%5C%3A1763989616845; captcha_session_v2=2|1:0|10:1763988761|18:captcha_session_v2|88:d0NBb2k0eWFncllpdXlaTVJ4Q09HKzdzRzVPUW9WVHpzcmFJMFlZbHlGQkhHTlhqNmZxbnhPck4wZWVHaFZPTA==|cabb9d56011f60e644002faf7ecabd3faed788837feca4ba2036da17758e54ce; captcha_ticket_v2=2|1:0|10:1763988773|17:captcha_ticket_v2|728:eyJ2YWxpZGF0ZSI6IkNOMzFfMEsybG5kbDhid1h0STI5WWJ5RWdYeXh0cVVQWmNjNFdxNnFmcDNFWUxKd1U4ZFpwRjJIRHYyUlM5Z3UybnUwZ01hQ29qMWVyV21oTGN1WU9oR0JvbU9yUzRGM3g4QXN4TzRXc2RJXzJFQ0lsOWVoV3htQlI1dGRYRFRXejgxZDRVVXNxUXNvNXZYdGRVak1wdnhaYU9JRWN5MEw4MC5pOHRpSG1NY3JpcXZwYnBvcmhsT0FUZWFmcVY2c0dNNXBBUXlkSmxLanJqcWZFMGRFRnRBTFd0X2pnNGJmakNpM2duQ1RIWGRrNHBHaWFrLlRpbVpESmpFU1dGeEZheUdDcV9xVzRQdElVWXBaOEVzcUlpTmxtOTVPbnk5dnBCc0hENHV2OVM4dlU0ODlWZFhJMFV2TnZjMVoydkFaZC5YYXN5aktBa2dWcm5yd204YW1VQUJrWFQ0ODRScHNSM0p3MGlpVWRPZVoxajBpLm82S1ZUNXVsZ2hFTUVYMXJZZDZsVWptTi54cndwUG9jbGlvZmNDaDlmc2JPKjJJbUE2WmxBRWxpVlIubWt5TzBHcGVabmwuMXYyZDNaanhwRGFXY284QjBoeVRtKnVZcGtzdnB4NkFUSTJLNERBdVNwVTBGX2RZYThYQXhLSnhNV3laNHU2Ti5ial84UHlTQlNnZnpCUlF3T1k3N192X2lfMSJ9|f6d917313bdffe9d590ddc508542e222394b3d65ca5f07297e61945029d54fba; z_c0=2|1:0|10:1763988774|4:z_c0|92:Mi4xTU9xcWtnQUFBQUJmNTlNb1VtTW1HaVlBQUFCZ0FsVk5KcU1SYWdELTZUa2pIVi1KSGxkNHB0S1lKM000Rl9Zbnd3|b8f60432bb51f950e57e91c413a7d821a0d335856728aeb6572f9941f37cd506; SESSIONID=0TllXxvMatTyqOKm7sSz1GDe6NdyFCqyyqgrl1JonT4; JOID=VVgQCk4XmoFRAZ5SThgPlR8Fp9pZIMvhMVvhIQ906dAkfNMeJhz4pTYEnFtOH71gFEIRRTORGroAcpAC0SB9zYA=; osd=UFgXBkISmoZdDZtSSRQDkB8Cq9ZcIMztPV7hJgN47NAjcN8bJhv0qTMEm1dCGr1nGE4URTSdFr8AdZwO1CB6wYw=; BEC=f7bc18b707cd87fca0d61511d015686f; Hm_lpvt_98beee57fd2ef70ccdd5ca52b9740c49=1763995690",
+      "interval": 600
     },
     {
-      "name": "bilibili", 
-      "url": "https://www.bilibili.com/v/popular/rank/all",
+      "name": "bilibili",
+      "url": "https://api.bilibili.com/x/web-interface/ranking/v2?w_rid=081136e0e51c90a64489053f1d8f4fdc\u0026wts=1763978646",
       "cookie": "",
-      "interval": 3600
+      "interval": 600
     }
   ],
-  "global_interval": 3600,  
-  "save_dir": "./hot-data"  
+  "global_interval": 600,
+  "save_dir": "./hot-data",
+  "mongo_url":"mongodb://mongozsh:123456@localhost:27017",
+  "mongodb_name":"crawlersData"
 }

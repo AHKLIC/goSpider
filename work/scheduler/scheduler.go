@@ -12,22 +12,22 @@ import (
 
 // Scheduler 定时调度器
 type Scheduler struct {
-	crawlers []crawler.Crawler    // 所有爬取器
-	storage  *storage.FileStorage // 存储实例
-	interval time.Duration        // 爬取间隔（如1小时）
-	wg       sync.WaitGroup       // 并发控制
-	stopChan chan struct{}        // 停止信号
+	crawlers []crawler.Crawler   // 所有爬取器
+	storage  *storage.AllStorage // 存储实例
+	interval time.Duration       // 爬取间隔（如1小时）
+	wg       sync.WaitGroup      // 并发控制
+	stopChan chan struct{}       // 停止信号
 }
 
 // NewScheduler 创建调度器   //interval单位为秒且应该为min
-func NewScheduler(interval time.Duration, saveDir string, crawlers []crawler.Crawler) (*Scheduler, error) {
-	fileStorage, err := storage.NewFileStorage(saveDir)
+func NewScheduler(interval time.Duration, crawlers []crawler.Crawler) (*Scheduler, error) {
+	allStorage, err := storage.NewAllStorage(true, false)
 	if err != nil {
 		return nil, err
 	}
 	return &Scheduler{
 		crawlers: crawlers,
-		storage:  fileStorage,
+		storage:  allStorage,
 		interval: interval,
 		stopChan: make(chan struct{}),
 	}, nil

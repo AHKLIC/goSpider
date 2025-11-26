@@ -25,6 +25,8 @@ type GlobalConfig struct {
 	Crawlers       []CrawlerConfig `json:"crawlers"`        // 所有爬虫配置
 	GlobalInterval int             `json:"global_interval"` // 全局爬取间隔（秒）
 	SaveDir        string          `json:"save_dir"`        // 数据存储目录
+	MongoURL       string          `json:"mongo_url"`       //链接
+	MongoDBName    string          `json:"mongodb_name"`    //数据库名
 }
 
 var globalConfig GlobalConfig
