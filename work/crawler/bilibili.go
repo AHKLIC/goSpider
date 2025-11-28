@@ -62,17 +62,10 @@ func (bili *BilibiliCrawler) Crawl() ([]interface{}, error) {
 
 	slog.Info("crawling", "source", bili.Name(), "url", bili.Cfg.URL)
 
-	const maxRetry uint32 = 2
+	const maxRetry uint32 = 3
 	for retry := uint32(0); retry < maxRetry; retry++ {
 		hotItems, err := bili.tryCrawl()
 		if err == nil && len(hotItems) > 0 {
-			// if retry > 0 {
-			// 	err := w.UpdateCookie(w.Name(), w.Cfg.URL)
-			// 	if err != nil {
-			// 		slog.Error("In UpdateCookie", "error", err)
-			// 	}
-			// }
-
 			// 爬取成功，返回结果
 			return hotItems, nil
 		}
