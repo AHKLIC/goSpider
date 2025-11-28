@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github/AHKLIC/Spider/work/config"
 	"github/AHKLIC/Spider/work/crawler"
+	"net"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -44,18 +46,44 @@ func NewAllStorage(dbOpen bool, fileOpen bool) (*AllStorage, error) {
 		if err := mongoCli.Ping(context.Background(), nil); err != nil {
 			return nil, fmt.Errorf("ping mongo failed: %w", err)
 		}
-		redisCli := redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379",
-			Password: "redis123456", // 你的Redis密码
-			DB:       0,
+
+		redisCli := redis.NewFailoverClient(&redis.FailoverOptions{
+			MasterName: "mymaster", // 哨兵监控的主节点名称（必须与哨兵配置一致）
+			SentinelAddrs: []string{ // 3 个哨兵的地址列表（主机:端口）
+				"localhost:26379",
+				"localhost:26380",
+				"localhost:26381",
+			},
+			Password: "123456", // Redis 节点密码（与集群配置一致）
+			DB:       0,        // 默认数据库索引
+			// 连接池配置（按需调整，优化性能）
+			PoolSize:     100,              // 最大连接数（默认：CPU 核心数 * 10）
+			MinIdleConns: 10,               // 最小空闲连接数（避免频繁创建连接）
+			IdleTimeout:  30 * time.Second, // 空闲连接超时时间（小于 Redis 服务端超时）
+			// 超时配置（避免卡死）
+			DialTimeout:  5 * time.Second, // 连接超时
+			ReadTimeout:  3 * time.Second, // 读超时
+			WriteTimeout: 3 * time.Second, // 写超时
+			Dialer: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				// addr 是哨兵返回的主节点地址（如 172.28.0.10:6379）
+				// 根据主节点容器内 IP，映射到对应的主机端口
+				switch addr {
+				case "172.28.0.10:6379": // 原主节点 → 主机端口 6379
+					addr = "localhost:6379"
+				case "172.28.0.11:6379": // 从节点1 → 主机端口 6380
+					addr = "localhost:6380"
+				case "172.28.0.12:6379": // 从节点2 → 主机端口 6381
+					addr = "localhost:6381"
+				}
+				// 用替换后的地址拨号连接
+				return net.DialTimeout(network, addr, 5*time.Second)
+			},
 		})
-		if redisCli == nil {
-
-			return nil, fmt.Errorf("connect to redis failed")
-
+		if err := redisCli.Ping(context.Background()).Err(); err != nil {
+			return nil, fmt.Errorf("连接哨兵集群失败: %w", err)
 		}
-		redisClient = redisCli
 
+		redisClient = redisCli
 		mongoClient = mongoCli
 
 	}
