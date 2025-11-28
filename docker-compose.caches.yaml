@@ -1,0 +1,142 @@
+version: '3.8'
+
+# 自定义网络：隔离集群，避免端口冲突
+networks:
+  redis-cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16  # 自定义子网，避免与其他网络冲突
+
+services:
+  ###########################################################################
+  # Redis 主从节点配置（1主2从）
+  ###########################################################################
+  # Redis Master（主节点）
+  redis-master:
+    image: redis:latest
+    container_name: redis-master
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.10  # 固定 IP，方便哨兵配置
+    ports:
+      - "6379:6379"  # 主机端口映射（主节点对外暴露 6379）
+    volumes:
+      # 挂载数据目录（主节点数据持久化）
+      - D:\DockerVolume\redis\master\data:/data
+      # 挂载自定义配置文件（后续手动创建）
+      - D:\DockerVolume\redis\master\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai  # 时区同步（避免日志时间错乱）
+    privileged: true  # 解决 Windows 下文件权限问题
+
+  # Redis Slave 1（从节点1）
+  redis-slave1:
+    image: redis:latest
+    container_name: redis-slave1
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.11  # 固定 IP
+    ports:
+      - "6380:6379"  # 从节点1对外暴露 6380
+    volumes:
+      - D:\DockerVolume\redis\slave1\data:/data
+      - D:\DockerVolume\redis\slave1\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master  # 依赖主节点，主节点启动后再启动从节点
+
+  # Redis Slave 2（从节点2）
+  redis-slave2:
+    image: redis:latest
+    container_name: redis-slave2
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.12  # 固定 IP
+    ports:
+      - "6381:6379"  # 从节点2对外暴露 6381
+    volumes:
+      - D:\DockerVolume\redis\slave2\data:/data
+      - D:\DockerVolume\redis\slave2\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+
+  ###########################################################################
+  # Redis 哨兵节点配置（3个哨兵，满足集群仲裁要求）
+  ###########################################################################
+  # Sentinel 1
+  redis-sentinel1:
+    image: redis:latest
+    container_name: redis-sentinel1
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.20  # 固定 IP
+    ports:
+      - "26379:26379"  # 哨兵1对外暴露 26379
+    volumes:
+      - D:\DockerVolume\redis\sentinel1\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf  # 启动哨兵模式
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+
+  # Sentinel 2
+  redis-sentinel2:
+    image: redis:latest
+    container_name: redis-sentinel2
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.21  # 固定 IP
+    ports:
+      - "26380:26379"  # 哨兵2对外暴露 26380
+    volumes:
+      - D:\DockerVolume\redis\sentinel2\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+
+  # Sentinel 3
+  redis-sentinel3:
+    image: redis:latest
+    container_name: redis-sentinel3
+    restart: unless-stopped  # 修改：除非手动停止，否则自动重启
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.22  # 固定 IP
+    ports:
+      - "26381:26379"  # 哨兵3对外暴露 26381
+    volumes:
+      - D:\DockerVolume\redis\sentinel3\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
