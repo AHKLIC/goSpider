@@ -12,24 +12,27 @@ import (
 
 // Scheduler 定时调度器
 type Scheduler struct {
-	crawlers []crawler.Crawler   // 所有爬取器
-	storage  *storage.AllStorage // 存储实例
-	interval time.Duration       // 爬取间隔（如1小时）
-	wg       sync.WaitGroup      // 并发控制
-	stopChan chan struct{}       // 停止信号
+	crawlers       []crawler.Crawler   // 所有爬取器
+	storage        *storage.AllStorage // 存储实例
+	interval       time.Duration       // 爬取间隔（如1小时）
+	wg             sync.WaitGroup      // 并发控制
+	stopChan       chan struct{}       // 停止信号
+	deleteInterval time.Duration       // 删除间隔
+
 }
 
-// NewScheduler 创建调度器   //interval单位为秒且应该为min
-func NewScheduler(interval time.Duration, crawlers []crawler.Crawler) (*Scheduler, error) {
+// NewScheduler 创建调度器  interval单位为秒且应该为min deleteInterval为数据库删除间隔
+func NewScheduler(interval time.Duration, deleteInterval time.Duration, crawlers []crawler.Crawler) (*Scheduler, error) {
 	allStorage, err := storage.NewAllStorage(true, false)
 	if err != nil {
 		return nil, err
 	}
 	return &Scheduler{
-		crawlers: crawlers,
-		storage:  allStorage,
-		interval: interval,
-		stopChan: make(chan struct{}),
+		crawlers:       crawlers,
+		storage:        allStorage,
+		interval:       interval,
+		stopChan:       make(chan struct{}),
+		deleteInterval: deleteInterval,
 	}, nil
 }
 
@@ -39,7 +42,7 @@ func (s *Scheduler) Start() {
 
 	// 首次爬取（立即执行）
 	s.runCrawlers()
-
+	go s.storage.MongoDeleteManage(s.deleteInterval, s.stopChan) // 启动数据库清理协程
 	// 定时执行
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
