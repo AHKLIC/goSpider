@@ -78,7 +78,7 @@ func (zhihu *ZhihuCrawler) tryCrawl() ([]interface{}, error) {
 		slog.Error("Failed to unmarshal zhihu JSON", "error", err, "json_length", len(jsonBytes))
 		return nil, fmt.Errorf("unmarshal json: %w", err)
 	}
-
+	crawledAtUTC := time.Now().In(config.ShanghaiLoc).UTC()
 	//提取目标字段，封装为自定义结构体
 	var result []interface{}
 	for _, item := range response.Data {
@@ -91,7 +91,7 @@ func (zhihu *ZhihuCrawler) tryCrawl() ([]interface{}, error) {
 				URL:       wwwURL,
 				Source:    "zhihu",         // 来源标记为知乎
 				HotValue:  item.DetailText, // 热度值（如 "1849 万热度"）
-				CrawledAt: time.Now(),      // 爬取时间
+				CrawledAt: crawledAtUTC,    // 爬取时间
 			},
 		}
 		result = append(result, hotItem)

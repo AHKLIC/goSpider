@@ -2,9 +2,11 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 var (
@@ -106,4 +108,17 @@ func UpdateGlobaURL(name string, url string) bool {
 	}
 	return false
 
+}
+
+var (
+	ShanghaiLoc *time.Location
+)
+
+func InitTimeZone() {
+	// 初始化上海时区（提前处理错误，生产环境可优雅退出）
+	var err error
+	ShanghaiLoc, err = time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		panic(fmt.Sprintf("加载时区失败: %v", err))
+	}
 }

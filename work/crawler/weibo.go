@@ -86,6 +86,7 @@ func (w *WeiboCrawler) tryCrawl() ([]interface{}, error) {
 	}
 
 	var hotItems []interface{}
+	crawledAtUTC := time.Now().In(config.ShanghaiLoc).UTC()
 	// 关键修改：使用最新的选择器 #pl_top_realtimehot table tbody tr
 	doc.Find("#pl_top_realtimehot table tbody tr").Each(func(index int, sel *goquery.Selection) {
 		// 跳过表头（第1行是表头）
@@ -124,7 +125,7 @@ func (w *WeiboCrawler) tryCrawl() ([]interface{}, error) {
 				URL:       url,
 				Source:    w.Name(),
 				HotValue:  hotStr,
-				CrawledAt: time.Now(),
+				CrawledAt: crawledAtUTC,
 			},
 		})
 	})
