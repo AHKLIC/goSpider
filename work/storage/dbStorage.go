@@ -313,7 +313,7 @@ func (db *DbStorage) cleanNonTodayData() error {
 		// 构建查询条件：hotitem.crawledat < UTC时间（上海时区当天00:00对应的UTC时间）
 		filter := bson.M{
 			"hotitem.crawledat": bson.M{
-				"$lt": utcTodayStartStr, // 匹配存储的UTC时间字符串
+				"$lt": utcTodayStart, // 匹配存储的UTC时间
 			},
 		}
 
