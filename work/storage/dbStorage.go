@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"reflect"
 
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -24,8 +25,9 @@ type DbStorage struct {
 
 }
 
-func (db *DbStorage) MongoDeleteManage(deleteInterval time.Duration, stop <-chan struct{}) {
+func (db *DbStorage) MongoDeleteManage(deleteInterval time.Duration, wg *sync.WaitGroup, stop <-chan struct{}) {
 
+	defer wg.Done()
 	if db.mongoClient == nil {
 		slog.Error("MongoDeleteManage初始化失败", "原因", "mongoClient未初始化")
 		panic("mongoClient未初始化，无法启动定时清理")

@@ -42,7 +42,8 @@ func (s *Scheduler) Start() {
 
 	// 首次爬取（立即执行）
 	s.runCrawlers()
-	go s.storage.MongoDeleteManage(s.deleteInterval, s.stopChan) // 启动数据库清理协程
+	s.wg.Add(1)
+	go s.storage.MongoDeleteManage(s.deleteInterval, &s.wg, s.stopChan) // 启动数据库清理协程
 	// 定时执行
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
@@ -62,6 +63,7 @@ func (s *Scheduler) Start() {
 func (s *Scheduler) Stop() {
 	close(s.stopChan)
 	s.wg.Wait()
+	s.storage.Close()
 }
 
 // runCrawlers 执行所有爬取器（并发）

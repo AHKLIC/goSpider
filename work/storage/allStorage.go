@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github/AHKLIC/Spider/work/config"
 	"github/AHKLIC/Spider/work/crawler"
+	"log/slog"
 	"net"
 	"os"
 	"sync"
@@ -258,4 +259,17 @@ func (all *AllStorage) saveZhihuHotItems(items []interface{}) error {
 		}
 	}
 	return nil
+}
+
+func (all *AllStorage) Close() {
+
+	err := all.redisClient.Close()
+	if err != nil {
+		slog.Error("释放redis连接失败", "error", err)
+	}
+	err = all.mongoClient.Disconnect(context.Background())
+	if err != nil {
+		slog.Error("释放mongodb连接失败", "error", err)
+	}
+
 }
