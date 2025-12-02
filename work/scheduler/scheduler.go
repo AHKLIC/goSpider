@@ -38,7 +38,7 @@ func NewScheduler(interval time.Duration, deleteInterval time.Duration, crawlers
 
 // Start 启动调度器（阻塞）
 func (s *Scheduler) Start() {
-	slog.Info("scheduler started", "interval", s.interval)
+	slog.Info("scheduler started", "interval", s.interval.Seconds())
 
 	// 首次爬取（立即执行）
 	s.runCrawlers()
