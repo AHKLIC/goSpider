@@ -15,7 +15,8 @@ type Scheduler struct {
 	crawlers       []crawler.Crawler   // 所有爬取器
 	storage        *storage.AllStorage // 存储实例
 	interval       time.Duration       // 爬取间隔（如1小时）
-	wg             sync.WaitGroup      // 并发控制
+	wg             sync.WaitGroup      // 爬取并发控制
+	wgDelete       sync.WaitGroup      //  定时删除控制
 	stopChan       chan struct{}       // 停止信号
 	deleteInterval time.Duration       // 删除间隔
 
@@ -23,7 +24,7 @@ type Scheduler struct {
 
 // NewScheduler 创建调度器  interval单位为秒且应该为min deleteInterval为数据库删除间隔
 func NewScheduler(interval time.Duration, deleteInterval time.Duration, crawlers []crawler.Crawler) (*Scheduler, error) {
-	allStorage, err := storage.NewAllStorage(true, false)
+	allStorage, err := storage.NewAllStorage()
 	if err != nil {
 		return nil, err
 	}
@@ -42,8 +43,8 @@ func (s *Scheduler) Start() {
 
 	// 首次爬取（立即执行）
 	s.runCrawlers()
-	s.wg.Add(1)
-	go s.storage.MongoDeleteManage(s.deleteInterval, &s.wg, s.stopChan) // 启动数据库清理协程
+	s.wgDelete.Add(1)
+	go s.storage.MongoDeleteManage(s.deleteInterval, &s.wgDelete, s.stopChan) // 启动数据库清理协程
 	// 定时执行
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
@@ -63,6 +64,7 @@ func (s *Scheduler) Start() {
 func (s *Scheduler) Stop() {
 	close(s.stopChan)
 	s.wg.Wait()
+	s.wgDelete.Wait()
 	s.storage.Close()
 }
 
