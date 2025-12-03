@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	ConfigPath string
-	ConfigMu   sync.Mutex //protect update with config.json
+	ConfigPath  string
+	ConfigMu    sync.Mutex //protect update with config.json
+	Mininterval int
 )
 
 // CrawlerConfig 单个爬虫的配置结构体
@@ -27,8 +28,10 @@ type GlobalConfig struct {
 	Crawlers       []CrawlerConfig `json:"crawlers"`        // 所有爬虫配置
 	GlobalInterval int             `json:"global_interval"` // 全局爬取间隔（秒）
 	SaveDir        string          `json:"save_dir"`        // 数据存储目录
-	MongoURL       string          `json:"mongo_url"`       //链接
-	MongoDBName    string          `json:"mongodb_name"`    //数据库名
+	MongoDBName    string          `json:"mongodb_name"`    //要连接的数据库名(存放爬取数据)
+	DbOpen         bool            `json:"dbopen"`          //数据库存储启用状态
+	FileOpen       bool            `json:"fileopen"`        //文件存储启用状态
+	MaxBatches     int             `json:"maxBatchs"`       //redis保存爬取数据的最大批次数默认为6
 }
 
 var globalConfig GlobalConfig
@@ -55,10 +58,15 @@ func Init(configPath string) error {
 	if err := decoder.Decode(&globalConfig); err != nil {
 		return err
 	}
-
+	Mininterval = globalConfig.GlobalInterval
 	// 填充默认值（若单个爬虫未配置interval则用全局值）
 	for i := range globalConfig.Crawlers {
-		if globalConfig.Crawlers[i].Interval == 0 {
+
+		if globalConfig.Crawlers[i].Interval != 0 {
+			if Mininterval > globalConfig.Crawlers[i].Interval {
+				Mininterval = globalConfig.Crawlers[i].Interval
+			}
+		} else {
 			globalConfig.Crawlers[i].Interval = globalConfig.GlobalInterval
 		}
 	}

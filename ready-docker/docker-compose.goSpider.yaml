@@ -1,0 +1,181 @@
+version: '3.8'
+
+# 网络配置：MongoDB 和 Redis 各自独立网络，应用服务同时加入两个网络
+networks:
+  mongowork:  # MongoDB 专属网络（仅 MongoDB 和应用服务可访问）
+    driver: bridge
+  redis-cluster-net:  # Redis 集群专属网络（仅 Redis 集群和应用服务可访问）
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+services:
+  ###########################################################################
+  # MongoDB 服务（仅归属 mongowork 网络，不加入 Redis 网络）
+  ###########################################################################
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - D:/DockerVolume/mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongozsh
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+      - TZ=Asia/Shanghai
+    restart: unless-stopped
+    networks:
+      - mongowork  # 仅加入 MongoDB 专属网络
+    privileged: true
+
+  ###########################################################################
+  # Redis 主从+哨兵集群（仅归属 redis-cluster-net 网络，不加入 MongoDB 网络）
+  ###########################################################################
+  redis-master:
+    image: redis:latest
+    container_name: redis-master
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.10
+    ports:
+      - "6379:6379"
+    volumes:
+      - D:\DockerVolume\redis\master\data:/data
+      - D:\DockerVolume\redis\master\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+
+  redis-slave1:
+    image: redis:latest
+    container_name: redis-slave1
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.11
+    ports:
+      - "6380:6379"
+    volumes:
+      - D:\DockerVolume\redis\slave1\data:/data
+      - D:\DockerVolume\redis\slave1\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+
+  redis-slave2:
+    image: redis:latest
+    container_name: redis-slave2
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.12
+    ports:
+      - "6381:6379"
+    volumes:
+      - D:\DockerVolume\redis\slave2\data:/data
+      - D:\DockerVolume\redis\slave2\conf:/usr/local/etc/redis
+      - D:\DockerVolume\redis\scripts\start-node.sh:/usr/local/bin/start-node.sh
+    command: bash -c "chmod +x /usr/local/bin/start-node.sh && /usr/local/bin/start-node.sh"
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+
+  redis-sentinel1:
+    image: redis:latest
+    container_name: redis-sentinel1
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.20
+    ports:
+      - "26379:26379"
+    volumes:
+      - D:\DockerVolume\redis\sentinel1\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+
+  redis-sentinel2:
+    image: redis:latest
+    container_name: redis-sentinel2
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.21
+    ports:
+      - "26380:26379"
+    volumes:
+      - D:\DockerVolume\redis\sentinel2\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+
+  redis-sentinel3:
+    image: redis:latest
+    container_name: redis-sentinel3
+    restart: unless-stopped
+    networks:
+      redis-cluster-net:
+        ipv4_address: 172.28.0.22
+    ports:
+      - "26381:26379"
+    volumes:
+      - D:\DockerVolume\redis\sentinel3\conf:/usr/local/etc/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    environment:
+      - TZ=Asia/Shanghai
+    privileged: true
+    depends_on:
+      - redis-master
+      - redis-slave1
+      - redis-slave2
+
+  ###########################################################################
+  # 应用服务（同时加入两个网络，可访问 MongoDB 和 Redis）
+  ###########################################################################
+  your-app:  # 替换为你的应用服务名称
+    image: crawlers-app:latest  # 替换为你的应用镜像
+    container_name:  goCrawlers
+    restart: unless-stopped
+    volumes:
+      - D:\DockerVolume\goSpider\app-config:/app/app-config  # 按需挂载应用配置
+      - D:\DockerVolume\goSpider\hot-data:/app/hot-data
+      - D:\DockerVolume\goSpider\logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai
+      # 应用连接 MongoDB 的地址（容器名+端口，因在同一网络可直接用容器名）
+      - MONGO_URI=mongodb://mongozsh:123456@mongodb:27017
+      # 应用连接 Redis 哨兵的地址（容器名+端口，同一网络可用容器名）
+      - REDIS_SENTINEL_ADDRESSES=redis-sentinel1:26379,redis-sentinel2:26379,redis-sentinel3:26379
+      - REDIS_MASTER_NAME=mymaster
+      - REDIS_PASSWORD=123456 # 若 Redis 有密码则配置
+    privileged: true
+    networks:
+      - mongowork  # 加入 MongoDB 网络，可访问 mongodb 容器
+      - redis-cluster-net  # 加入 Redis 网络，可访问 Redis 集群
+    depends_on:
+      - mongodb  # 应用依赖 MongoDB 启动
+      - redis-sentinel1  # 应用依赖 Redis 哨兵启动（确保 Redis 集群就绪）
+      - redis-sentinel2
+      - redis-sentinel3

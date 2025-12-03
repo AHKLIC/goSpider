@@ -6,8 +6,8 @@ import (
 	"github/AHKLIC/Spider/work/config"
 	"github/AHKLIC/Spider/work/crawler"
 	"log/slog"
-	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,23 +24,41 @@ type AllStorage struct {
 	mu         sync.Mutex // 并发安全锁
 }
 
-// 参数1为是否开启数据库存储，参数2为是否开启文件存储，默认开启文件存储关闭数据库存储
-func NewAllStorage(dbOpen bool, fileOpen bool) (*AllStorage, error) {
+// dbOpen为是否开启数据库存储，fileOpen 为是否开启文件存储，默认开启文件存储关闭数据库存储
+func NewAllStorage() (*AllStorage, error) {
 
-	globalConfig := config.GetGlobalConfig() //获取存储配置
+	globalConfig := config.GetGlobalConfig() //获取config.json存储配置
 	saveDir := globalConfig.SaveDir
 	mongodbName := globalConfig.MongoDBName
-	mongoUrl := globalConfig.MongoURL
-
+	fileOpen := globalConfig.FileOpen
+	dbOpen := globalConfig.DbOpen
+	maxBatches := globalConfig.MaxBatches
 	var mongoClient *mongo.Client
 	var redisClient *redis.Client
+	//docker环境变量获取配置
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://mongozsh:123456@mongodb:27017"
+	}
+
+	sentinelAddrsEnv := os.Getenv("REDIS_SENTINEL_ADDRESSES")
+	if sentinelAddrsEnv == "" {
+		sentinelAddrsEnv = "redis-sentinel1:26379,redis-sentinel2:26379,redis-sentinel3:26379"
+	}
+	sentinelAddrs := strings.Split(sentinelAddrsEnv, ",")
+
+	masterName := os.Getenv("REDIS_MASTER_NAME")
+	if masterName == "" {
+		masterName = "mymaster"
+	}
+	redisPassword := os.Getenv("REDIS_PASSWORD")
 	if fileOpen {
 		if err := os.MkdirAll(saveDir, 0755); err != nil {
 			return nil, err
 		}
 	}
 	if dbOpen {
-		mongoCli, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoUrl))
+		mongoCli, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoURI))
 		if err != nil {
 			return nil, fmt.Errorf("init mongo client failed: %w", err)
 		}
@@ -49,36 +67,18 @@ func NewAllStorage(dbOpen bool, fileOpen bool) (*AllStorage, error) {
 		}
 
 		redisCli := redis.NewFailoverClient(&redis.FailoverOptions{
-			MasterName: "mymaster", // 哨兵监控的主节点名称（必须与哨兵配置一致）
-			SentinelAddrs: []string{ // 3 个哨兵的地址列表（主机:端口）
-				"localhost:26379",
-				"localhost:26380",
-				"localhost:26381",
-			},
-			Password: "123456", // Redis 节点密码（与集群配置一致）
-			DB:       0,        // 默认数据库索引
+			MasterName:    masterName, // 哨兵监控的主节点名称（必须与哨兵配置一致）
+			SentinelAddrs: sentinelAddrs,
+			Password:      redisPassword, // Redis 节点密码（与集群配置一致）
+			DB:            0,             // 默认数据库索引
 			// 连接池配置（按需调整，优化性能）
 			PoolSize:     100,              // 最大连接数（默认：CPU 核心数 * 10）
 			MinIdleConns: 10,               // 最小空闲连接数（避免频繁创建连接）
-			IdleTimeout:  30 * time.Second, // 空闲连接超时时间（小于 Redis 服务端超时）
+			IdleTimeout:  10 * time.Second, // 空闲连接超时时间（小于 Redis 服务端超时）
 			// 超时配置（避免卡死）
 			DialTimeout:  5 * time.Second, // 连接超时
 			ReadTimeout:  3 * time.Second, // 读超时
 			WriteTimeout: 3 * time.Second, // 写超时
-			Dialer: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				// addr 是哨兵返回的主节点地址（如 172.28.0.10:6379）
-				// 根据主节点容器内 IP，映射到对应的主机端口
-				switch addr {
-				case "172.28.0.10:6379": // 原主节点 → 主机端口 6379
-					addr = "localhost:6379"
-				case "172.28.0.11:6379": // 从节点1 → 主机端口 6380
-					addr = "localhost:6380"
-				case "172.28.0.12:6379": // 从节点2 → 主机端口 6381
-					addr = "localhost:6381"
-				}
-				// 用替换后的地址拨号连接
-				return net.DialTimeout(network, addr, 5*time.Second)
-			},
 		})
 		if err := redisCli.Ping(context.Background()).Err(); err != nil {
 			return nil, fmt.Errorf("连接哨兵集群失败: %w", err)
@@ -97,7 +97,7 @@ func NewAllStorage(dbOpen bool, fileOpen bool) (*AllStorage, error) {
 			mongoClient: mongoClient,
 			mongodbName: mongodbName,
 			redisClient: redisClient,
-			maxBatches:  6, //每一数据源只保留6批最新的缓存
+			maxBatches:  maxBatches, //每一数据源只保留maxBatches批最新的缓存
 		},
 	}, nil
 
