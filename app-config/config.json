@@ -1,0 +1,28 @@
+{
+  "crawlers": [
+    {
+      "name": "weibo",
+      "url": "https://s.weibo.com/top/summary?cate=realtimehot",
+      "cookie": "SUB=_2AkMef5b-f8NxqwJRmvwUz2LlZIpyzQzEieKoI2clJRMxHRl-yT9kqnUdtRB6Nf-4ESwlYAZvlIOM0tBeezP3mwfr0SBm; SUBP=0033WrSXqPxfM72-Ws9jqgMF55529P9D9WhY9eoyW74YK4oyuvJipsSj",
+      "interval": 180
+    },
+    {
+      "name": "zhihu",
+      "url": "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50\u0026desktop=true",
+      "cookie": "",
+      "interval": 300
+    },
+    {
+      "name": "bilibili",
+      "url": "https://api.bilibili.com/x/web-interface/ranking/v2",
+      "cookie": "",
+      "interval": 300
+    }
+  ],
+  "global_interval": 300,
+  "save_dir": "./hot-data",
+  "dbopen":true,
+  "fileopen":false,
+  "maxBatchs":6,
+  "mongodb_name": "crawlersData"
+}
