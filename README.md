@@ -1,4 +1,4 @@
-这是一个可拓展的go爬虫程序现已支持mongodb，添加新爬虫按以下步骤进行，第一步在congfig.json里添加新配置，
+这是一个可拓展的go爬虫程序现已支持mongodb，添加新爬虫按以下步骤进行，第一步在app-config/congfig.json里添加新配置，
 
 第二步在work/crawler里添加配置对应的go文件，实现可参考zhihu.go ,weibo.go，支持自定义结构体，
 
@@ -19,6 +19,15 @@
     
 	}
 
-现已支持接入reids哨兵集群
+ 现已支持接入reids哨兵集群
+
+ 现已支持docker部署，请依据ready-docker文件中的内容进行部署
+ ！！！！请注意新建文件的权限与路径，本项目支持wsl和liunx，示例的挂载目录在windows中
+
+
+
+
+
+
   
   
