@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// HotItem 热点数据结构体（统一格式，无修改）
+// HotItem 热点数据结构体基本格式
 type HotItem struct {
 	Title     string    // 热点标题
 	URL       string    // 热点链接

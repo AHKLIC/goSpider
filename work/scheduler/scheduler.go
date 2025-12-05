@@ -14,7 +14,7 @@ import (
 type Scheduler struct {
 	crawlers       []crawler.Crawler   // 所有爬取器
 	storage        *storage.AllStorage // 存储实例
-	interval       time.Duration       // 爬取间隔（如1小时）
+	interval       time.Duration       // 爬取间隔（如1分钟）
 	wg             sync.WaitGroup      // 爬取并发控制
 	wgDelete       sync.WaitGroup      //  定时删除控制
 	stopChan       chan struct{}       // 停止信号
